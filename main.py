@@ -4,6 +4,8 @@ import datetime
 from dop import LoginForm
 import os
 from PIL import Image
+import requests
+import sys
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
@@ -76,20 +78,72 @@ class NewsModel:
                              ingrid VARCHAR(100),
                              photo VARCHAR(100),
                              hard INTEGER,
-                             date,
-                             user_id INTEGER
+                             date
                              )''')
+
+        # Ищем город Якутск, ответ просим выдать в формате json.
+        geocoder_request = "https://us.api.blizzard.com/hearthstone/cards?locale=ru_RU&class=warrior&pageSize=500&access_token=USbWNxZHXsE2yMMmu87igbrU61StUZuPfU"
+        # Выполняем запрос.
+        response = None
+        try:
+            response = requests.get(geocoder_request)
+            if response:
+                # Преобразуем ответ в json-объект
+                json_response = response.json()
+
+                # Получаем первый топоним из ответа геокодера.
+                # Согласно описанию ответа, он находится по следующему пути:
+                toponym = json_response["cards"][0]
+                # Полный адрес топонима:
+                name = toponym["name"]
+                # Координаты центра топонима:
+                manacost = toponym["manaCost"]
+                id = toponym["id"]
+                # Печатаем извлечённые из ответа поля:
+            else:
+                print("Ошибка выполнения запроса:")
+                print(geocoder_request)
+                print("Http статус:", response.status_code, "(", response.reason, ")")
+        except:
+            print("Запрос не удалось выполнить. Проверьте подключение к сети Интернет.")
+
+        response = None
+        try:
+            map_request = toponym['image']
+            print(toponym['image'])
+            response = requests.get(map_request)
+
+            if not response:
+                print("Ошибка выполнения запроса:")
+                # print(geocoder_request)
+                print("Http статус:", response.status_code, "(", response.reason, ")")
+                sys.exit(1)
+        except:
+            print("Запрос не удалось выполнить. Проверьте наличие сети Интернет.")
+            sys.exit(1)
+
+        # Запишем полученное изображение в файл.
+        map_file = "static/map.png"
+        try:
+            with open(map_file, "wb") as file:
+                file.write(response.content)
+        except IOError as ex:
+            print("Ошибка записи временного файла:", ex)
+            sys.exit(2)
+
+        self.insert(name, manacost, id, 1, 'static/map.png')
         cursor.close()
         self.connection.commit()
+        os.remove(map_file)
 
-    def insert(self, name, content, ingrid, photo, hard, user_id):
+    def insert(self, name, content, ingrid, photo, hard):
         cursor = self.connection.cursor()
         date = int(str(datetime.date.today()).split('-')[0]) * 364 + int(
             str(datetime.date.today()).split('-')[1]) * 30 + int(
             str(datetime.date.today()).split('-')[2])
         cursor.execute('''INSERT INTO news 
-                          (name, content, ingrid, photo,hard,date, user_id) 
-                          VALUES (?,?,?,?,?,?,?)''', (name, content, ingrid, photo, hard, date, str(user_id)))
+                          (name, content, ingrid, photo,hard,date) 
+                          VALUES (?,?,?,?,?,?)''', (name, content, ingrid, photo, hard, date))
         cursor.close()
         self.connection.commit()
 
@@ -207,32 +261,6 @@ def logout():
     return redirect('/index')
 
 
-@app.route('/add_book', methods=['GET', 'POST'])
-def add_book():
-    if request.method == 'GET':
-        return render_template('add_news.html')
-    elif request.method == 'POST':
-        if 'username' not in session:
-            return redirect('/login')
-        title = request.form['name']
-        content = request.form['recipe']
-        ingrid = request.form['ingrid']
-        hard = request.form['hard']
-        if title != '' and content != '' and ingrid != '':
-            if 'file' not in request.form:
-                where = 'static/for_recipes/' + request.files['file'].filename
-                request.files['file'].save(where)
-                editor_files(where)
-            else:
-                print('не все поля заполнены')
-                return redirect('/add_book')
-            nm = NewsModel(db.get_connection())
-            nm.insert(title, content, ingrid, hard, where, session['user_id'])
-            return redirect("/index")
-        return redirect('/add_book')
-        # return render_template('add_news.html')
-
-
 # @app.route('/red_book/<int:news_id>', methods=['GET', 'POST'])
 # def red_book(news_id):
 #    print(0)
@@ -274,7 +302,7 @@ def form_sample():
                 if user_name in i:
                     print('Такой логин уже занят')
                     return redirect('/registration')
-            #if 'file' not in request.form:
+            # if 'file' not in request.form:
             #    where = 'static/for_logins/' + request.files['file'].filename
             #    request.files['file'].save(where)
             #    editor_files(where)
