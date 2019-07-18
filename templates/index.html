@@ -8,11 +8,11 @@
 {% endif %}
 <ul class="nav nav-list">
     <li class="nav-header"><strong>Cортировать по:&nbsp;&nbsp;</strong></li>
-    Дате
-    <li class="active"><a href="/index">&#9660;</a></li>
-    <li><a href="/index_false">&#9650;</a></li>
+    Стоимости
+    <li class="active"><a href="/index">&#9650;</a></li>
+    <li><a href="/index_false">&#9660;</a></li>
     &#8195;
-    Названию
+    Алфавиту
     <li><a href="/index_name_true">&#9660;</a></li>
     <li><a href="/index_name_false">&#9650;</a></li>
     &#8195;
@@ -30,18 +30,18 @@
         <br>
         <b>Название:&nbsp;</b>
         {{item[1]}}<br>
-        <b>Рецепт:&nbsp;</b>
+        <b>Стоимость:&nbsp;</b>
         {{item[2]}}<br>
-        <b>Ингридиенты:&nbsp;</b>
+        <b>Эффекты:&nbsp;</b>
         {{item[3]}}<br>
-        <b>Сложность:&nbsp;</b>
+        <b>Описание:&nbsp;</b>
         {{item[4]}}<br>
         {% if session["username"] == admin %}
         <a href="/delete_book/{{item[0]}}">Удалить рецепт</a>
         {% endif %}
     </div>
     <div class="col-md-4">
-        <img width="2000" height="800" class="img-thumbnail img-fluid" src="{{item[5]}}" alt="">
+        <img width="2000" height="800" class="img-fluid" src="{{item[5]}}" alt="">
     </div>
     <div class="col-md-1">
     </div>

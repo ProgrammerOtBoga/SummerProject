@@ -82,74 +82,49 @@ class NewsModel:
                              )''')
 
         # Ищем город Якутск, ответ просим выдать в формате json.
-        geocoder_request = "https://us.api.blizzard.com/hearthstone/cards?locale=ru_RU&class=warrior&pageSize=500&access_token=USbWNxZHXsE2yMMmu87igbrU61StUZuPfU"
+        geocoder_request = "https://us.api.blizzard.com/hearthstone/cards?locale=ru_RU&class=warrior&collectible=1&pageSize=500&access_token=USbWNxZHXsE2yMMmu87igbrU61StUZuPfU"
         # Выполняем запрос.
-        response = None
-        try:
-            response = requests.get(geocoder_request)
-            if response:
-                # Преобразуем ответ в json-объект
-                json_response = response.json()
+        response = requests.get(geocoder_request)
+        json_response = response.json()
 
-                # Получаем первый топоним из ответа геокодера.
-                # Согласно описанию ответа, он находится по следующему пути:
-                toponym = json_response["cards"][0]
-                # Полный адрес топонима:
-                name = toponym["name"]
-                # Координаты центра топонима:
-                manacost = toponym["manaCost"]
-                id = toponym["id"]
-                # Печатаем извлечённые из ответа поля:
-            else:
-                print("Ошибка выполнения запроса:")
-                print(geocoder_request)
-                print("Http статус:", response.status_code, "(", response.reason, ")")
-        except:
-            print("Запрос не удалось выполнить. Проверьте подключение к сети Интернет.")
+        names = set()
 
-        response = None
-        try:
-            map_request = toponym['image']
-            print(toponym['image'])
-            response = requests.get(map_request)
+        cursor.execute("SELECT * FROM news")
+        rows = cursor.fetchall()
+        if rows:
+            for row in rows:
+                names.add(row[1])
+        # Получаем первый топоним из ответа геокодера.
+        # Согласно описанию ответа, он находится по следующему пути:
+        for toponym in json_response["cards"]:
+            # Полный адрес топонима:
 
-            if not response:
-                print("Ошибка выполнения запроса:")
-                # print(geocoder_request)
-                print("Http статус:", response.status_code, "(", response.reason, ")")
-                sys.exit(1)
-        except:
-            print("Запрос не удалось выполнить. Проверьте наличие сети Интернет.")
-            sys.exit(1)
+            # Координаты центра топонима:
+            manacost = toponym["manaCost"]
+            name = toponym["name"]
+            if not manacost or name in names:
+                continue
+            text = toponym["text"]
 
-        # Запишем полученное изображение в файл.
-        map_file = "static/map.png"
-        try:
-            with open(map_file, "wb") as file:
-                file.write(response.content)
-        except IOError as ex:
-            print("Ошибка записи временного файла:", ex)
-            sys.exit(2)
-
-        self.insert(name, manacost, id, 1, 'static/map.png')
+            flavor = toponym['flavorText']
+            self.insert(name, manacost, text, flavor, toponym['image'])
         cursor.close()
         self.connection.commit()
-        os.remove(map_file)
 
-    def insert(self, name, content, ingrid, photo, hard):
+    def insert(self, name, manacost, text, photo, hard):
         cursor = self.connection.cursor()
         date = int(str(datetime.date.today()).split('-')[0]) * 364 + int(
             str(datetime.date.today()).split('-')[1]) * 30 + int(
             str(datetime.date.today()).split('-')[2])
         cursor.execute('''INSERT INTO news 
                           (name, content, ingrid, photo,hard,date) 
-                          VALUES (?,?,?,?,?,?)''', (name, content, ingrid, photo, hard, date))
+                          VALUES (?,?,?,?,?,?)''', (name, manacost, text, photo, hard, date))
         cursor.close()
         self.connection.commit()
 
-    def get(self, news_id):
+    def get(self, name):
         cursor = self.connection.cursor()
-        cursor.execute("SELECT * FROM news WHERE id = ?", (str(news_id)))
+        cursor.execute("SELECT * FROM news WHERE name = ?", (str(name)))
         row = cursor.fetchone()
         return row
 
@@ -188,7 +163,7 @@ def index():
     news = NewsModel(db.get_connection()).get_all()
     admin = 'fatahoff.georgy@yandex.ru'
     if len(news) != 0:
-        news = sorted(news, key=lambda tup: tup[6], reverse=True)
+        news = sorted(news, key=lambda tup: int(tup[2]))
     return render_template('index.html',
                            news=news, admin=admin)
 
@@ -198,7 +173,7 @@ def index_false():
     news = NewsModel(db.get_connection()).get_all()
     admin = 'fatahoff.georgy@yandex.ru'
     if len(news) != 0:
-        news = sorted(news, key=lambda tup: tup[6], reverse=False)
+        news = sorted(news, key=lambda tup: int(tup[2]), reverse=True)
     return render_template('index.html',
                            news=news, admin=admin)
 
