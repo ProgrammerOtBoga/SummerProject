@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if "username" in session %}
+<a class="navbar-brand" href="/logout">Выход</a>{{session["username"]}}&nbsp;&nbsp;
+{% else %}
+<a class="navbar-brand" href="/login">Вход</a>
+{% endif %}
+<ul class="nav nav-list">
+    <li class="nav-header"><strong>Cортировать по:&nbsp;&nbsp;</strong></li>
+    Стоимости
+    <li class="active"><a href="/index">&#9650;</a></li>
+    <li><a href="/index_false">&#9660;</a></li>
+    &#8195;
+    Алфавиту
+    <li><a href="/index_name_false">&#9650;</a></li>
+    <li><a href="/index_name_true">&#9660;</a></li>
+</ul>
+
+<div class="form-group">
+    <label for="classSelect">Класс карт</label>
+    <select class="form-control" id="classSelect" name="class">
+        <option>neutral</option>
+        <option>druid</option>
+        <option>hunter</option>
+        <option>mage</option>
+        <option>paladin</option>
+        <option>priest</option>
+        <option>rogue</option>
+        <option>shaman</option>
+        <option>warlock</option>
+        <option>warrior</option>
+    </select>
+</div>
+
+<button type="submit" class="btn btn-primary">Поиск</button>
+
+
+<div class="row">
+    <br><br><br>
+</div>
+{% for item in news %}
+
+<div class="row">
+    <div class="col-md-4">
+        <br>
+        <b>Название:&nbsp;</b>
+        {{item[1]}}<br>
+        <b>Стоимость:&nbsp;</b>
+        {{item[2]}}<br>
+        <b>Эффекты:&nbsp;</b>
+        {{item[3]}}<br>
+        <b>Описание:&nbsp;</b>
+        {{item[4]}}<br>
+        {% if session["username"] == admin %}
+        <a href="/delete_book/{{item[0]}}">Удалить рецепт</a>
+        {% endif %}
+    </div>
+    <div class="col-md-4">
+        <img width="2000" height="800" class="img-fluid" src="{{item[5]}}" alt="">
+    </div>
+    <div class="col-md-1">
+    </div>
+    <div class="col-md-2">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Реклама</h3>
+            </div>
+            <div class="panel-body">
+                Здесь могла быть ваша реклама!
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <br><br><br>
+</div>
+
+{% endfor %}
+{% endblock %}

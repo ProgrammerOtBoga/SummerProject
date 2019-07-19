@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<body>
+<h1><b>Регистрация</b></h1>
+
+<form method="post">
+    <input type="email" class="form-control" id="email" aria-describedby="emailHelp" placeholder="*Введите адрес почты"
+           name="email">
+    <input type="password" class="form-control" id="password" placeholder="*Введите пароль" name="password">
+    <div class="form-group">
+        <label for="classSelect">Любимый класс</label>
+        <select class="form-control" id="classSelect" name="class">
+            <option>Не выбран</option>
+            <option>Друид</option>
+            <option>Охотник</option>
+            <option>Маг</option>
+            <option>Паладин</option>
+            <option>Жрец</option>
+            <option>Разбойник</option>
+            <option>Шаман</option>
+            <option>Чернокнижник</option>
+            <option>Воин</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="about">Немного о себе</label>
+        <textarea class="form-control" id="about" rows="3" name="about"></textarea>
+    </div>
+    <div class="form-group">
+        <label for="photo">Приложите свою фотографию</label>
+        <input type="file" class="form-control-file" id="photo" name="file">
+    </div>
+    <div class="form-group">
+        <label for="form-check">Укажите пол</label>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="sex" id="male" value="male" checked>
+            <label class="form-check-label" for="male">
+                Мужской
+            </label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="sex" id="female" value="female">
+            <label class="form-check-label" for="female">
+                Женский
+            </label>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Готово</button>
+</form>
+</body>
+{% endblock %}
