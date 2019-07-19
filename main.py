@@ -69,7 +69,7 @@ class NewsModel:
     def __init__(self, connection):
         self.connection = connection
 
-    def init_table(self):
+    def init_table(self, clas='neutral'):
         cursor = self.connection.cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS news 
                             (id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -82,7 +82,7 @@ class NewsModel:
                              )''')
 
         # Ищем город Якутск, ответ просим выдать в формате json.
-        geocoder_request = "https://us.api.blizzard.com/hearthstone/cards?locale=ru_RU&class=warrior&collectible=1&pageSize=500&access_token=USbWNxZHXsE2yMMmu87igbrU61StUZuPfU"
+        geocoder_request = "https://us.api.blizzard.com/hearthstone/cards?locale=ru_RU&class=" + clas + "&collectible=1&pageSize=500&access_token=USbWNxZHXsE2yMMmu87igbrU61StUZuPfU"
         # Выполняем запрос.
         response = requests.get(geocoder_request)
         json_response = response.json()
@@ -145,6 +145,7 @@ class NewsModel:
 db = DB()
 news = NewsModel(db.get_connection())
 news.init_table()
+
 user_model = UsersModel(db.get_connection())
 user_model.init_table()
 
@@ -158,14 +159,19 @@ def editor_files(name):
 
 
 @app.route('/')
-@app.route('/index')
+@app.route('/index', methods=['POST', 'GET'])
 def index():
-    news = NewsModel(db.get_connection()).get_all()
-    admin = 'fatahoff.georgy@yandex.ru'
-    if len(news) != 0:
-        news = sorted(news, key=lambda tup: int(tup[2]))
-    return render_template('index.html',
-                           news=news, admin=admin)
+    if request.method == 'GET':
+        news = NewsModel(db.get_connection()).get_all()
+        admin = 'fatahoff.georgy@yandex.ru'
+        if len(news) != 0:
+            news = sorted(news, key=lambda tup: int(tup[2]))
+        return render_template('index.html', news=news, admin=admin)
+    elif request.method == 'POST':
+        print(1)
+        news = NewsModel(db.get_connection())
+        news.init_table(request.form['about'])
+        return redirect('/index_false')
 
 
 @app.route('/index_false')
@@ -193,24 +199,6 @@ def index_name_false():
     news = NewsModel(db.get_connection()).get_all()
     if len(news) != 0:
         news = sorted(news, key=lambda tup: tup[1], reverse=False)
-    return render_template('index.html', news=news, admin=admin)
-
-
-@app.route('/index_hard_true')
-def index_hard_true():
-    admin = 'fatahoff.georgy@yandex.ru'
-    news = NewsModel(db.get_connection()).get_all()
-    if len(news) != 0:
-        news = sorted(news, key=lambda tup: tup[5], reverse=True)
-    return render_template('index.html', news=news, admin=admin)
-
-
-@app.route('/index_hard_false')
-def index_hard_false():
-    admin = 'fatahoff.georgy@yandex.ru'
-    news = NewsModel(db.get_connection()).get_all()
-    if len(news) != 0:
-        news = sorted(news, key=lambda tup: tup[5], reverse=False)
     return render_template('index.html', news=news, admin=admin)
 
 
